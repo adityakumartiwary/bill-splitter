@@ -1,55 +1,164 @@
-import React, { useState } from 'react';
+import { useState } from "react";
 
-function BillSplitter() {
-  const [billAmount, setBillAmount] = useState(0);
-  const [splitWays, setSplitWays] = useState(1);
-  const [splitAmount, setSplitAmount] = useState(0);
+const App = () => {
+  const [categories, setCategories] = useState([
+    { name: "House Rent", total: 0 },
+    { name: "Food", total: 0 },
+    { name: "Water", total: 0 },
+    { name: "Electricity", total: 0 },
+    { name: "Internet", total: 0 },
+  ]);
+  const [selectedCategory, setSelectedCategory] = useState("House Rent");
+  const [newCategory, setNewCategory] = useState("");
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [numPeople, setNumPeople] = useState("");
+  const [tipPercentage, setTipPercentage] = useState(0);
+  const [splitAmount, setSplitAmount] = useState(null);
 
+  // Calculate split amount
   const calculateSplit = () => {
-    const amount = parseFloat(billAmount);
-    const ways = parseInt(splitWays);
-    if (!isNaN(amount) && !isNaN(ways)) {
-      setSplitAmount((amount / ways).toFixed(2));
-    } else {
-      setSplitAmount("Invalid Input");
+    const amount = parseFloat(expenseAmount);
+    const people = parseInt(numPeople);
+    const tip = (amount * tipPercentage) / 100;
+    const totalAmount = amount + tip;
+
+    if (!amount || !people || people <= 0) {
+      setSplitAmount("Please enter valid values!");
+      return;
+    }
+
+    const result = totalAmount / people;
+    setSplitAmount(result.toFixed(2));
+
+    // Update total for selected category
+    setCategories((prevCategories) =>
+      prevCategories.map((category) =>
+        category.name === selectedCategory
+          ? { ...category, total: category.total + totalAmount }
+          : category
+      )
+    );
+
+    setExpenseAmount("");
+    setNumPeople("");
+    setTipPercentage(0);
+  };
+
+  // Add a new custom category
+  const addCategory = () => {
+    if (newCategory.trim()) {
+      setCategories([...categories, { name: newCategory.trim(), total: 0 }]);
+      setNewCategory("");
     }
   };
 
+  // Calculate the total of all expenses
+  const totalExpenses = categories.reduce((sum, category) => sum + category.total, 0);
+
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-lg font-bold mb-4">Split Your Bill</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2" for="billAmount">Bill Amount</label>
-          <input 
-            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-            type="number" 
-            id="billAmount" 
-            value={billAmount} 
-            onChange={(e) => setBillAmount(e.target.value)} 
+    <div className="flex">
+      {/* Sidebar */}
+      <div className="w-1/4 h-screen bg-gray-200 p-4">
+        <h2 className="text-xl font-bold mb-4">Expense Categories</h2>
+        <ul className="mb-4">
+          {categories.map((category, index) => (
+            <li
+              key={index}
+              className={`cursor-pointer p-2 rounded ${
+                selectedCategory === category.name
+                  ? "bg-blue-500 text-white"
+                  : "hover:bg-blue-100"
+              }`}
+              onClick={() => setSelectedCategory(category.name)}
+            >
+              {category.name} - ₹{category.total.toFixed(2)}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4">
+          <input
+            type="text"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            className="w-full px-2 py-1 border rounded mb-2"
+            placeholder="Add new category"
           />
+          <button
+            onClick={addCategory}
+            className="w-full bg-blue-500 text-white py-1 rounded hover:bg-blue-600 transition"
+          >
+            Add Category
+          </button>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-2" for="splitWays">Split Ways</label>
-          <input 
-            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-            type="number" 
-            id="splitWays" 
-            value={splitWays} 
-            onChange={(e) => setSplitWays(e.target.value)} 
-          />
+        <div className="mt-8">
+          <h3 className="text-lg font-bold">Total Expenses:</h3>
+          <p className="text-xl text-blue-600 font-bold">₹{totalExpenses.toFixed(2)}</p>
         </div>
-        <button 
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" 
-          type="button" 
-          onClick={calculateSplit}
-        >
-          Calculate
-        </button>
-        <p className="text-lg font-bold">Split Amount: ${splitAmount}</p>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center bg-gray-100">
+        <div className="p-8 bg-white shadow-lg rounded-lg w-96">
+          <h1 className="text-2xl font-bold text-center mb-6">
+            Bill Splitter App
+          </h1>
+
+          <p className="text-gray-700 font-medium mb-4">
+            Selected Category:{" "}
+            <span className="text-blue-600 font-bold">{selectedCategory}</span>
+          </p>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium mb-2">
+              Expense Amount
+            </label>
+            <input
+              type="number"
+              value={expenseAmount}
+              onChange={(e) => setExpenseAmount(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
+              placeholder="Enter expense amount"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium mb-2">
+              Number of People
+            </label>
+            <input
+              type="number"
+              value={numPeople}
+              onChange={(e) => setNumPeople(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
+              placeholder="Enter number of people"
+            />
+          </div>
+
+          
+
+          <button
+            onClick={calculateSplit}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition"
+          >
+            Split Bill
+          </button>
+
+          {splitAmount !== null && (
+            <div className="mt-6 text-center">
+              {isNaN(splitAmount) ? (
+                <p className="text-red-500">{splitAmount}</p>
+              ) : (
+                <p className="text-lg font-bold">
+                  Each person owes:{" "}
+                  <span className="text-blue-600">₹{splitAmount}</span>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-}
+};
 
-export default BillSplitter;
+export default App;
